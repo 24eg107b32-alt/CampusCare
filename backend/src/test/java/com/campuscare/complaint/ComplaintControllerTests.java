@@ -6,9 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
@@ -31,7 +33,7 @@ import com.campuscare.config.SecurityConfig;
 @WebMvcTest(controllers = {ComplaintController.class, AuthController.class}, properties = {
     "app.admin.username=admin",
     "app.admin.password=test-password",
-    "app.cors.allowed-origins=http://localhost:5175"
+    "app.cors.allowed-origins=http://localhost:5175,https://campus-care-one-liard.vercel.app"
 })
 @Import({CorsConfig.class, SecurityConfig.class})
 @SuppressWarnings("null")
@@ -39,6 +41,17 @@ class ComplaintControllerTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Test
+    void vercelPreflightAllowsCredentialedRegistration() throws Exception {
+        mockMvc.perform(options("/api/auth/register")
+                        .header("Origin", "https://campus-care-one-liard.vercel.app")
+                        .header("Access-Control-Request-Method", "POST")
+                        .header("Access-Control-Request-Headers", "content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Access-Control-Allow-Origin", "https://campus-care-one-liard.vercel.app"))
+                .andExpect(header().string("Access-Control-Allow-Credentials", "true"));
+    }
 
     @MockBean
     private ComplaintRepository complaintRepository;
