@@ -1,6 +1,12 @@
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? '/api' : 'http://localhost:8080/api')).replace(/\/$/, '')
+const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.trim()
+const productionUsesLocalApi = import.meta.env.PROD && /^https?:\/\/(localhost|127(?:\.\d{1,3}){3})(:\d+)?(?:\/|$)/i.test(configuredApiBase || '')
+const API_BASE = (productionUsesLocalApi ? '/api' : configuredApiBase || (import.meta.env.PROD ? '/api' : 'http://localhost:8080/api')).replace(/\/$/, '')
 
 async function request(path, options = {}) {
+  if (productionUsesLocalApi) {
+    throw new Error('Production API is configured as localhost. Set VITE_API_BASE_URL to the deployed backend URL in Vercel, then redeploy.')
+  }
+
   let response
   try {
     response = await fetch(`${API_BASE}${path}`, {
