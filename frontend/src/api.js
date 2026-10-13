@@ -4,7 +4,9 @@ const invalidProductionApi = import.meta.env.PROD && (
   /^https?:\/\/(localhost|127(?:\.\d{1,3}){3})(:\d+)?(?:\/|$)/i.test(configuredApiBase || '')
   || configuredApiBase?.startsWith('/')
 )
-const API_BASE = (invalidProductionApi ? productionApiBase : configuredApiBase || (import.meta.env.PROD ? productionApiBase : 'http://localhost:8080/api')).replace(/\/$/, '')
+const configuredBase = invalidProductionApi ? productionApiBase : configuredApiBase || (import.meta.env.PROD ? productionApiBase : 'http://localhost:8080/api')
+const normalizedBase = configuredBase.replace(/\/+$/, '')
+const API_BASE = normalizedBase.toLowerCase().endsWith('/api') ? normalizedBase : `${normalizedBase}/api`
 
 async function request(path, options = {}) {
   let response
